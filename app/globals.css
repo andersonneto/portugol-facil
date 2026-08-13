@@ -10,3 +10,4 @@
 @media(max-width:1050px){.workspace-bar{padding:10px 12px}.file-tab{display:none}.actions{width:100%;justify-content:center}}
 @media(max-width:600px){.actions{display:grid;grid-template-columns:repeat(4,1fr)}.actions button{font-size:11px;padding:9px 6px!important}.actions .ghost{display:block}.actions .run{grid-column:1/5}.run kbd{display:none}}
 .footer-copy{display:flex;flex-direction:column;gap:5px}.footer-copy p{margin:0}.footer-copy small{font-size:11px;color:#bdc9c2}.footer-copy small b{color:#eef5f0}
+.file-input{display:none}.actions .pdf:hover{background:#fff0e5;color:#a54b13}.version{font:9px monospace;color:var(--lime);background:#ffffff12;border:1px solid #ffffff20;border-radius:10px;padding:3px 6px;margin-left:5px;font-style:normal;vertical-align:middle}
