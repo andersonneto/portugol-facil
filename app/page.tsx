@@ -8,7 +8,7 @@ const EXEMPLOS = {
   "Contagem": `algoritmo "Contagem"\nvar\n   i: inteiro\ninicio\n   para i de 1 ate 10 faca\n      escreval("Número: ", i)\n   fimpara\nfimalgoritmo`,
 };
 
-const APP_VERSION = "1.1.1";
+const APP_VERSION = "1.1.2";
 
 function expression(text: string) {
   return normalizeCommands(text).replace(/<>/g, "!=").replace(/\bnao\b/gi, "!").replace(/\be\b/gi, "&&").replace(/\bou\b/gi, "||")
@@ -74,7 +74,7 @@ function highlight(source: string) {
 }
 
 export default function Home() {
-  const [code, setCode] = useState(EXEMPLOS["Média escolar"]);
+  const [code, setCode] = useState(EXEMPLOS["Olá, mundo"]);
   const [output, setOutput] = useState("Clique em Executar para ver o resultado do algoritmo.");
   const [status, setStatus] = useState<"pronto" | "sucesso" | "erro">("pronto");
   const highlightRef = useRef<HTMLPreElement>(null);
