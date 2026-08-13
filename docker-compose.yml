@@ -1,0 +1,14 @@
+services:
+  portugol-facil:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portugol-facil:latest
+    container_name: portugol-facil
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "3000:3000"
