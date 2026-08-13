@@ -8,7 +8,7 @@ const EXEMPLOS = {
   "Contagem": `algoritmo "Contagem"\nvar\n   i: inteiro\ninicio\n   para i de 1 ate 10 faca\n      escreval("Número: ", i)\n   fimpara\nfimalgoritmo`,
 };
 
-const APP_VERSION = "1.1.2";
+const APP_VERSION = "1.2.0";
 
 function expression(text: string) {
   return normalizeCommands(text).replace(/<>/g, "!=").replace(/\bnao\b/gi, "!").replace(/\be\b/gi, "&&").replace(/\bou\b/gi, "||")
@@ -73,6 +73,23 @@ function highlight(source: string) {
   return result + escape(source.slice(cursor));
 }
 
+function formatPortugol(source: string) {
+  let indent = 0;
+  return source.split("\n").map((original) => {
+    const line = original.trim();
+    if (!line) return "";
+    const command = normalizeCommands(line).toLowerCase();
+    const closesBlock = /^(fimse|fimpara|fimenquanto|fimalgoritmo)\b/.test(command);
+    const middleBlock = /^(senao)\b/.test(command);
+    if (closesBlock || middleBlock) indent = Math.max(0, indent - 1);
+    if (/^(inicio|fimalgoritmo)\b/.test(command)) indent = 0;
+    const formatted = `${"   ".repeat(indent)}${line}`;
+    if (/^(inicio|senao)\b/.test(command) || /^se\b.*\bentao$/.test(command) || /^(para|enquanto)\b.*\bfaca$/.test(command)) indent += 1;
+    if (command === "var") indent = 1;
+    return formatted;
+  }).join("\n").replace(/\n{3,}/g, "\n\n").trimEnd();
+}
+
 export default function Home() {
   const [code, setCode] = useState(EXEMPLOS["Olá, mundo"]);
   const [output, setOutput] = useState("Clique em Executar para ver o resultado do algoritmo.");
@@ -81,6 +98,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lines = useMemo(() => Array.from({length: code.split("\n").length}, (_, i) => i + 1), [code]);
   function run(){try{setOutput(Function(compile(code))()||"Programa finalizado sem saída.");setStatus("sucesso");}catch(error){setOutput(error instanceof Error?error.message:"Ocorreu um erro ao executar.");setStatus("erro");}}
+  function formatCode(){setCode(formatPortugol(code));setStatus("pronto");}
   function fileName(){return (code.match(/^\s*algoritmo\s+"([^"]+)"/im)?.[1]||"meu_algoritmo").replace(/[^\wÀ-ÿ-]+/g,"_")+".alg";}
   function save(){const url=URL.createObjectURL(new Blob([code],{type:"text/plain;charset=utf-8"}));const link=document.createElement("a");link.href=url;link.download=fileName();link.click();URL.revokeObjectURL(url);}
   function openFile(event: React.ChangeEvent<HTMLInputElement>){const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{setCode(String(reader.result??""));setOutput("");setStatus("pronto");};reader.readAsText(file,"UTF-8");event.target.value="";}
@@ -90,8 +108,8 @@ export default function Home() {
     <header className="topbar"><a className="brand" href="#"><span className="brand-mark">P</span><span>Portugol <b>Fácil</b></span></a><nav><a href="#editor">Editor</a><a href="#aprender">Aprender</a><a href="#exemplos">Exemplos</a></nav><span className="student-pill">Feito para aprender</span></header>
     <section className="hero"><div><span className="eyebrow">LÓGICA DE PROGRAMAÇÃO</span><h1>Escreva. Execute.<br/><em>Entenda.</em></h1></div><p>Aprenda algoritmos em português direto no navegador. Simples para quem está começando, útil para quem está praticando.</p></section>
     <section className="workspace" id="editor">
-      <div className="workspace-bar"><div className="file-tab"><span className="file-icon">◆</span> {fileName()} <span className="dot">●</span></div><div className="actions"><button className="ghost" onClick={()=>{setCode("");setOutput("");setStatus("pronto");}}>Novo</button><button className="ghost" onClick={()=>fileInputRef.current?.click()} title="Abrir arquivo .alg ou .txt">↑ Abrir</button><input ref={fileInputRef} className="file-input" type="file" accept=".alg,.txt,text/plain" onChange={openFile}/><button className="ghost save" onClick={save} title="Baixar o código em formato .alg">↓ Salvar</button><details className="options-menu"><summary>Opções <span>▾</span></summary><div className="options-popover"><button onClick={()=>share("whatsapp")}><b>WhatsApp</b><small>Compartilhar código</small></button><button onClick={()=>share("email")}><b>E-mail</b><small>Enviar código</small></button><button onClick={printPdf}><b>Imprimir</b><small>Imprimir ou salvar</small></button></div></details><button className="run" onClick={run}><span>▶</span> Executar <kbd>F9</kbd></button></div></div>
-      <div className="panels"><div className="editor-panel"><div className="panel-label">CÓDIGO <span className="syntax-label"><i></i> destaque de sintaxe</span></div><div className="code-wrap"><div className="line-numbers" aria-hidden="true">{lines.map(n=><span key={n}>{n}</span>)}</div><div className="code-editor"><pre ref={highlightRef} className="highlight-layer" aria-hidden="true" dangerouslySetInnerHTML={{__html:highlight(code)+"\n"}}/><textarea value={code} onChange={e=>setCode(e.target.value)} onScroll={e=>{if(highlightRef.current){highlightRef.current.scrollTop=e.currentTarget.scrollTop;highlightRef.current.scrollLeft=e.currentTarget.scrollLeft;}}} onKeyDown={e=>{if(e.key==="F9"){e.preventDefault();run();}}} spellCheck={false} aria-label="Editor de código Portugol"/></div></div></div>
+      <div className="workspace-bar"><div className="file-tab"><span className="file-icon">◆</span> {fileName()} <span className="dot">●</span></div><div className="actions"><button className="ghost" onClick={()=>{setCode("");setOutput("");setStatus("pronto");}}>Novo</button><button className="ghost" onClick={()=>fileInputRef.current?.click()} title="Abrir arquivo .alg ou .txt">↑ Abrir</button><input ref={fileInputRef} className="file-input" type="file" accept=".alg,.txt,text/plain" onChange={openFile}/><button className="ghost save" onClick={save} title="Baixar o código em formato .alg">↓ Salvar</button><details className="options-menu"><summary>Opções <span>▾</span></summary><div className="options-popover"><button onClick={formatCode}><b>Formatar código</b><small>Shift + Alt + F</small></button><button onClick={()=>share("whatsapp")}><b>WhatsApp</b><small>Compartilhar código</small></button><button onClick={()=>share("email")}><b>E-mail</b><small>Enviar código</small></button><button onClick={printPdf}><b>Imprimir</b><small>Imprimir ou salvar</small></button></div></details><button className="run" onClick={run}><span>▶</span> Executar <kbd>F9</kbd></button></div></div>
+      <div className="panels"><div className="editor-panel"><div className="panel-label">CÓDIGO <span className="syntax-label"><i></i> destaque de sintaxe</span></div><div className="code-wrap"><div className="line-numbers" aria-hidden="true">{lines.map(n=><span key={n}>{n}</span>)}</div><div className="code-editor"><pre ref={highlightRef} className="highlight-layer" aria-hidden="true" dangerouslySetInnerHTML={{__html:highlight(code)+"\n"}}/><textarea value={code} onChange={e=>setCode(e.target.value)} onScroll={e=>{if(highlightRef.current){highlightRef.current.scrollTop=e.currentTarget.scrollTop;highlightRef.current.scrollLeft=e.currentTarget.scrollLeft;}}} onKeyDown={e=>{if(e.key==="F9"){e.preventDefault();run();}else if(e.shiftKey&&e.altKey&&e.key.toLowerCase()==="f"){e.preventDefault();formatCode();}}} spellCheck={false} aria-label="Editor de código Portugol"/></div></div></div>
       <div className="console-panel"><div className="console-head"><div><span className="terminal-icon">›_</span><b> SAÍDA</b></div><button onClick={()=>setOutput("")}>Limpar</button></div><pre className={status}>{output}</pre><div className="console-status"><span className={`status-dot ${status}`}></span>{status==="sucesso"?"Execução concluída":status==="erro"?"Verifique o algoritmo":"Aguardando execução"}</div></div></div>
     </section>
     <section className="learn" id="aprender"><div><span className="eyebrow">COMECE AGORA</span><h2>Exemplos para experimentar</h2><p>Escolha um exemplo, altere os valores e observe como cada comando funciona.</p></div><div className="example-grid" id="exemplos">{Object.entries(EXEMPLOS).map(([name,value],i)=><button key={name} onClick={()=>{setCode(value);setStatus("pronto");setOutput("Exemplo carregado. Clique em Executar.");window.scrollTo({top:380,behavior:"smooth"});}}><span>0{i+1}</span><b>{name}</b><small>{i===0?"Saída de texto":i===1?"Variáveis e condição":"Laço de repetição"}</small><i>→</i></button>)}</div></section>
